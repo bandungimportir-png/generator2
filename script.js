@@ -176,17 +176,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Loading overlay functions
-    const showLoading = () => {
-        const overlay = document.getElementById('loading-overlay');
-        overlay.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    };
+    
 
-    const hideLoading = () => {
-        const overlay = document.getElementById('loading-overlay');
-        overlay.style.display = 'none';
-        document.body.style.overflow = '';
-    };
+    
 
     // Reset form with smooth animation
     document.getElementById('reset-btn').addEventListener('click', () => {
@@ -440,3 +432,4 @@ document.addEventListener('DOMContentLoaded', () => {
         showNotification('Selamat datang! Mulai isi form untuk membuat prompt AI video profesional. 🎬', 'info');
     }, 1000);
 }); 
+

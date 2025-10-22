@@ -176,9 +176,17 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Loading overlay functions
-    
+    const showLoading = () => {
+        const overlay = document.getElementById('loading-overlay');
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    };
 
-    
+    const hideLoading = () => {
+        const overlay = document.getElementById('loading-overlay');
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
+    };
 
     // Reset form with smooth animation
     document.getElementById('reset-btn').addEventListener('click', () => {
@@ -430,6 +438,183 @@ document.addEventListener('DOMContentLoaded', () => {
     // Welcome message
     setTimeout(() => {
         showNotification('Selamat datang! Mulai isi form untuk membuat prompt AI video profesional. 🎬', 'info');
+    }, 3);
+}); ID += addSection('Negative Prompt', inputs.negatif);
+
+        // Remove trailing newlines
+        promptID = promptID.trim();
+        setElementValue('output-id', promptID);
+
+        // Generate English Prompt
+        let promptEN = `**Scene Title:** ${inputs.judul}\n\n`;
+        promptEN += addSection('Core Character', inputs.karakter);
+        promptEN += addSection('Character Voice Details', inputs.suara);
+        promptEN += addSection('Character Action', inputs.aksi);
+        promptEN += addSection('Character Expression', inputs.ekspresi);
+        promptEN += addSection('Setting & Time', inputs.latar);
+        
+        // Handle camera movement and visual details for English
+        let visualSectionEN = '';
+        if (inputs.kamera || inputs.visualTambahan.trim()) {
+            visualSectionEN = '**Additional Visual Details:**\n';
+            if (inputs.kamera) visualSectionEN += `Camera Movement: ${inputs.kamera}. `;
+            if (inputs.visualTambahan.trim()) visualSectionEN += inputs.visualTambahan.trim();
+            visualSectionEN += '\n\n';
+        }
+        promptEN += visualSectionEN;
+        
+        promptEN += addSection('Overall Atmosphere', inputs.suasana);
+        promptEN += addSection('Environmental Sound/Ambiance', inputs.ambience);
+        promptEN += addSection('Character Dialog (in Indonesian)', inputs.dialog);
+        promptEN += addSection('Negative Prompt', inputs.negatif);
+        
+        // Remove trailing newlines
+        promptEN = promptEN.trim();
+        setElementValue('output-en', promptEN);
+        
+        hideLoading();
+        
+        // Scroll to output with smooth animation
+        document.querySelector('.output-container').scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+        });
+        
+        showNotification('Prompt berhasil dibuat! 🎉', 'success');
+    });
+
+    // Enhanced copy to clipboard functionality
+    const copyToClipboard = async (text, buttonId) => {
+        const button = document.getElementById(buttonId);
+        const originalContent = button.innerHTML;
+        
+        try {
+            await navigator.clipboard.writeText(text);
+            
+            button.innerHTML = '<i class="fas fa-check"></i><span>Tersalin!</span>';
+            button.style.background = 'var(--accent-success)';
+            
+            setTimeout(() => {
+                button.innerHTML = originalContent;
+                button.style.background = '';
+            }, 2000);
+            
+            showNotification('Prompt berhasil disalin ke clipboard!', 'success');
+            
+        } catch (err) {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.opacity = '0';
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            
+            button.innerHTML = '<i class="fas fa-check"></i><span>Tersalin!</span>';
+            button.style.background = 'var(--accent-success)';
+            
+            setTimeout(() => {
+                button.innerHTML = originalContent;
+                button.style.background = '';
+            }, 2000);
+            
+            showNotification('Prompt berhasil disalin ke clipboard!', 'success');
+        }
+    };
+
+    // Copy button event listeners
+    document.getElementById('copy-id-btn').addEventListener('click', () => {
+        const text = getElementValue('output-id');
+        if (text.trim()) {
+            copyToClipboard(text, 'copy-id-btn');
+        } else {
+            showNotification('Tidak ada prompt untuk disalin. Generate prompt terlebih dahulu!', 'error');
+        }
+    });
+
+    document.getElementById('copy-en-btn').addEventListener('click', () => {
+        const text = getElementValue('output-en');
+        if (text.trim()) {
+            copyToClipboard(text, 'copy-en-btn');
+        } else {
+            showNotification('Tidak ada prompt untuk disalin. Generate prompt terlebih dahulu!', 'error');
+        }
+    });
+
+    // Auto-save functionality (optional)
+    const autoSave = () => {
+        const formData = {};
+        const inputs = document.querySelectorAll('input, textarea, select');
+        inputs.forEach(input => {
+            if (input.id) {
+                formData[input.id] = input.value;
+            }
+        });
+        localStorage.setItem('veo3-prompt-data', JSON.stringify(formData));
+    };
+
+    // Auto-load saved data
+    const autoLoad = () => {
+        const savedData = localStorage.getItem('veo3-prompt-data');
+        if (savedData) {
+            try {
+                const formData = JSON.parse(savedData);
+                Object.keys(formData).forEach(key => {
+                    setElementValue(key, formData[key]);
+                });
+                updateProgress();
+                showNotification('Data tersimpan berhasil dimuat!', 'info');
+            } catch (e) {
+                console.log('Failed to load saved data');
+            }
+        }
+    };
+
+    // Auto-save every 30 seconds
+    setInterval(autoSave, 30000);
+
+    // Auto-save on page unload
+    window.addEventListener('beforeunload', autoSave);
+
+    // Load saved data on page load
+    autoLoad();
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        // Ctrl/Cmd + Enter to generate
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('generate-btn').click();
+        }
+        
+        // Ctrl/Cmd + R to reset (with confirmation)
+        if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+            e.preventDefault();
+            document.getElementById('reset-btn').click();
+        }
+    });
+
+    // Initialize progress on page load
+    updateProgress();
+
+    // Add smooth focus animations
+    const inputs = document.querySelectorAll('input, textarea, select');
+    inputs.forEach(input => {
+        input.addEventListener('focus', (e) => {
+            e.target.closest('.input-group').style.transform = 'translateY(-2px)';
+        });
+        
+        input.addEventListener('blur', (e) => {
+            e.target.closest('.input-group').style.transform = '';
+        });
+    });
+
+    // Welcome message
+    setTimeout(() => {
+        showNotification('Selamat datang! Mulai isi form untuk membuat prompt AI video profesional. 🎬', 'info');
     }, 1000);
 }); 
+
 
